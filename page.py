@@ -1,43 +1,58 @@
+# -*- encoding: utf-8 -*-
+
+from turtle import isvisible
 from Stemmer import Stemmer
 import re
 
 class Page():
     # Directly using NLTK stopwords to avoid package import
     stopWords = set(['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', 've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't", 'ma', 'mightn', "mightn't", 'mustn', "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"])
+    hindiStopWords = set(['कुल', 'रख', 'जब', 'बाद', 'को', 'स', 'आद', 'आप', 'होत', 'प', 'वाल', 'ल', 'जैस', 'इसम', 'म', 'हु', 'ज', 'होन', 'किय', 'व', 'उसक', 'यह', 'न', 'सभ', 'कर', 'यद', 'उनक', 'तक', 'तरह', 'य', 'किस', 'अप', 'दिय', 'पर', 'इसक', 'ह', 'अभ', 'द', 'गय', 'बन', 'और', 'एक', 'वह', 'क', 'सबस', 'साथ', 'थ', 'वर्ग', 'इस', 'सक', 'एस', 'उस', 'कह', 'रह', 'नह', 'है', 'कुछ', 'त', 'बहुत', 'हैं', 'द्वार', 'लिय', 'एवं'])
     stemmer = Stemmer('english')
+    hindi_stemmer = Stemmer('hindi')
     uniqueWords = set()
 
     def __init__(self) -> None:
         pass
     
     def cleanData(self, data):
-        tokens_to_replace = ['—', '|', '&apos;', '&', "'", '–', '=', '#', '[', ':', '&quot;', ']', '^', '%', '`', '!', '+', '&lt;', '{', '"', '&gt;', '&nbsp;', '}', '*', '/', '~', '.', ',', '@', '_', '(', '\n', ';', '\\', '>', '<', 'http', '-', ')', '$', '?', '&amp;', "\n"]
+        tokens_to_replace = ['—', '|', '&apos;', '&', "'", '–', '=', '#', '[', ':', '&quot;', ']', '^', '%', '`', '!', '+', '&lt;', '{', '"', '&gt;', '&nbsp;', '}', '*', '/', '~', '.', ',', '@', '_', '(', '\n', ';', '\\', '>', '<', 'http', '-', ')', '$', '?', '&amp;', "\n", "।", "\u200E", "“", "−", "●", "”", "‘", "…", "₹", "’"]
         for token in tokens_to_replace:
             data = data.replace(token, " ")
         return data
 
     def isValid(self, ele):
-        if ele in Page.stopWords:
+        if ele in Page.stopWords or ele in Page.hindiStopWords:
             return False
         length = len(ele)
         if ele.isalpha() and len(ele)>=3 and len(ele)<=14:
             return True
         if ele.isnumeric() and len(ele)<=8:
             return True
+        if re.search(r"[\u0900-\u097F]+", ele) is not None and len(ele)>=3 and len(ele)<=14:
+            return True
         return False
+
+    def get_stem(self, word):
+        if re.search(r"[\u0900-\u097F]+", word) is not None:
+            return Page.hindi_stemmer.stemWord(word)
+        return Page.stemmer.stemWord(word)
+        
     
     def getStemmedTokens(self, data, isPage=True):
-        data = data.encode("ascii", errors="ignore").decode()
+        # data = data.encode("raw-unicode-escape", errors="ignore").decode("utf-8", errors="ignore")
 
         data = self.cleanData(data)
         
         data = data.split()
+        data = [token if re.search(r"[\u0900-\u097F]+", token) is not None else token.encode("ascii", errors="ignore").decode() for token in data]
+      
         if isPage:
             for ele in data:
                 Page.uniqueWords.add(ele)
 
-        stemmedtokens = [ele for ele in data if self.isValid(ele)]
-        stemmedtokens = Page.stemmer.stemWords(stemmedtokens)
+        stemmedtokens = [self.get_stem(ele) for ele in data if self.isValid(ele)]
+        # stemmedtokens = Page.stemmer.stemWords(stemmedtokens)
         return stemmedtokens
     
     def processCorpus(self, text, title):

@@ -285,7 +285,7 @@ class Indexer:
                 if curr_word!='':
                     data.append(curr_data)
                     
-                    offset.append(offset[-1]+len(curr_data)+1)
+                    offset.append(offset[-1]+len(curr_data.encode('utf-8'))+1)
                     count+=1
                     # vocabfiledata.append(f"{curr_word} {curr_freq}-{page_cnt}")
                     net_count += 1
@@ -310,7 +310,7 @@ class Indexer:
                 os.remove(fil)
         
         data.append(curr_data)
-        offset.append(offset[-1]+len(curr_data)+1)
+        offset.append(offset[-1]+len(curr_data.encode('utf-8'))+1)
         count+=1
         # vocabfiledata.append(f"{curr_word} {curr_freq}-{page_cnt}")
         Indexer.writeFile(page_cnt, file_field, data, offset)

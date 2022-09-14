@@ -1,3 +1,7 @@
+# -*- encoding: utf-8 -*-
+# import sys
+# reload(sys)
+# sys.setdefaultencoding("ISO-8859-1")
 import sys
 import re
 import os
@@ -60,9 +64,14 @@ class DocQuery():
             mid = (lower+upper)//2
             # print(mid)
             # print(f"upper -> {upper}")
+            print(mid)
+            print(self.indexfilepath)
             indexfile.seek(int(self.offsets[mid]))
             linez = indexfile.readline().strip()
+            print(linez)
             linez_tok = linez.split()
+            # if len(linez_tok)==0:
+            #     break
             if linez_tok[0]==query:
                 indexfile.close()
                 return linez_tok
@@ -181,7 +190,7 @@ class IDFQuery:
 
 def calculatescore(word, field, score_dict, isFieldQuery=False):
     file_no = a.processQuery(word, field)
-    # print(f"{file_no} {word} {field}")
+    print(f"{file_no} {word} {field}")
     dquery = DocQuery(field, file_no)
     doclist = dquery.fetchLine(word)
     # title_dict = {}
@@ -224,11 +233,13 @@ def calculatescore(word, field, score_dict, isFieldQuery=False):
 def clean_query(data):
     page = Page()
     data = page.getStemmedTokens(data, False)
+    print(data)
     return data
 
 
 def rank_documents(query):
     query = query.lower()
+    print(query)
     score_dict = {}
     FIELD_TO_INDEX = {"t": 1, "b": 2, "i": 3, "c": 4, "r": 5, "l": 6}
 
@@ -321,7 +332,7 @@ if __name__ == "__main__":
         write_str = rank_documents(query)
         # print(write_str)
         end_time = time()
-        with open("./queries_op.txt", "a+") as f:
+        with open("./queries_op.txt", "a+", encoding="utf-8") as f:
             if write_str is not None:
                 f.write(write_str)
             f.write("\n")
